@@ -1,0 +1,3 @@
+[submodule "net_templates"]
+	path = net_templates
+	url = git@github.com:mihudec/net_templates.git
