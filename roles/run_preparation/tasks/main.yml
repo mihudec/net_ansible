@@ -1,0 +1,8 @@
+---
+# tasks file for run_preparation
+- name: Make Sure TEMPLATE_OUTPUT_DIR Exists
+  file:
+    path: "{{ TEMPLATE_OUTPUT_DIR }}"
+    state: directory
+  delegate_to: localhost
+  run_once: true

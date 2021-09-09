@@ -1,0 +1,13 @@
+galaxy_info:
+  author: Miroslav Hudec
+  description: Role_Description_TBD
+  company: Company_TBD
+
+  license: License_TBD
+
+  min_ansible_version: 2.1
+
+  galaxy_tags: []
+
+dependencies: []
+

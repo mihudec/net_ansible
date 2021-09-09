@@ -1,0 +1,41 @@
+---
+- name: Validate Data - Interfaces
+  ansible.builtin.assert:
+    that:
+      - params | mihudec.net_ansible.validate_data(model=model_name, many=false)
+    fail_msg: "Data Validation Failed"
+    success_msg: "Given data is valid accoring to '{{ model_name }}' model."
+    quiet: true
+  vars:
+    model_name: 'InterfaceContainerModel'
+    params: "{{ {'interfaces': interfaces} }}"
+  when:
+    - interfaces is defined
+
+- name: Validate Data - Interfaces (Individual)
+  ansible.builtin.assert:
+    that:
+      - params | mihudec.net_ansible.validate_data(model=model_name, many=false)
+      - item.key == item.value.name
+    fail_msg: "Data Validation Failed"
+    success_msg: "Given data is valid accoring to '{{ model_name }}' model."
+    quiet: true
+  loop: "{{ interfaces | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  vars:
+    model_name: 'InterfaceModel'
+    params: "{{ item.value }}"
+  when:
+    - interfaces is defined
+
+- name: Template - Interfaces
+  ansible.builtin.template:
+    src: "{{ ansible_network_os }}/{{ ansible_network_os }}_{{ template_name }}.j2"
+    dest: "{{ TEMPLATE_OUTPUT_DIR }}/{{ inventory_hostname }}_{{ ansible_network_os }}_{{ template_name }}.txt"
+  vars:
+    model_name: 'InterfaceContainerModel'
+    template_name: 'interfaces'
+    params: "{{ {'interfaces': interfaces} | mihudec.net_ansible.to_model(model=model_name) }}"
+  when:
+    - interfaces is defined

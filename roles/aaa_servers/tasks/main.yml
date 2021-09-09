@@ -1,0 +1,72 @@
+---
+# tasks file for aaa_servers
+- name: Validate Data - TACACS Groups and Servers
+  ansible.builtin.assert:
+    that:
+      - params | mihudec.net_ansible.validate_data(model=model_name, many=False)
+    fail_msg: "Data Validation Failed"
+    success_msg: "Given data is valid accoring to '{{ model_name }}' model."
+    quiet: true
+  loop: "{{ aaa_servers.tacacs_groups }}"
+  loop_control: 
+    label: "{{ item.name }}"
+  vars:
+    model_name: 'TacacsServerGroup'
+    params: "{{ item }}"
+  when:
+    - aaa_servers.tacacs_groups is defined
+
+
+- name: DEBUG - Tacacs Groups and Servers
+  ansible.builtin.debug:
+    var: 
+      - params
+      - params_type
+  loop: "{{ aaa_servers.tacacs_groups }}"
+  loop_control:
+    label: "{{ params.name }}"
+  vars:
+    model_name: 'TacacsServerGroup'
+    params: "{{ item | mihudec.net_ansible.to_model(model=model_name, many=False) }}"
+    params_type: "{{ params | type_debug }}"
+  when:
+    - DEBUG | default(false) | bool
+
+- name: Template - Tacacs Groups and Servers
+  ansible.builtin.template:
+    src: "{{ ansible_network_os }}/{{ ansible_network_os }}_{{ template_name }}.j2"
+    dest: "{{ TEMPLATE_OUTPUT_DIR }}/{{ inventory_hostname }}_{{ ansible_network_os }}_{{ template_name }}.txt"
+  vars:
+    model_name: 'TacacsServerGroup'
+    template_name: 'aaa_tacacs_all'
+    params: "{{ aaa_servers.tacacs_groups | mihudec.net_ansible.to_model(model=model_name) }}"
+  when:
+    - aaa_servers.tacacs_groups is defined
+
+# - name: Validate Data - RADIUS Groups
+#   assert:
+#     that:
+#       - params | mihudec.net_ansible.validate_data(model='RadiusServerGroup')
+#     fail_msg: "Data Validation Failed"
+#     success_msg: "Given data is valid accoring to 'RadiusServerGroup' model."
+#     quiet: true
+#   loop: "{{ aaa.radius_groups }}"
+#   loop_control: 
+#     label: "{{ item.name }}"
+#   vars:
+#     params: "{{ item }}"
+#   when:
+#     - aaa.radius_groups is defined
+
+# - name: Template RADIUS Groups
+#   template:
+#     src: "{{ ansible_network_os }}/{{ ansible_network_os }}_{{ template_name }}.j2"
+#     dest: "{{TEMPLATE_OUTPUT_DIR }}/{{ inventory_hostname }}_{{ ansible_network_os }}_{{ template_name }}.txt"
+#   loop: "{{ aaa.radius_groups }}"
+#   loop_control:
+#     label: "{{ item.name }}"
+#   vars:
+#     template_name: 'aaa_group_radius'
+#     params: "{{ item }}"
+#   when:
+#     - aaa.radius_groups is defined
