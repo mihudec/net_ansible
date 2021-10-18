@@ -1,0 +1,13 @@
+- name: Validate Data - VLANs
+  set_fact: 
+    validated_vlans: "{{ vlan_definitions | mihudec.net_filters.get_vlans(host_name=inventory_hostname) }}"
+
+- name: Template - VLANs
+  ansible.builtin.template:
+    src: "{{ ansible_network_os }}/{{ ansible_network_os }}_{{ template_name }}.j2"
+    dest: "{{ TEMPLATE_OUTPUT_DIR }}/{{ inventory_hostname }}_{{ ansible_network_os }}_{{ template_name }}.txt"
+  vars:
+    template_name: 'vlan_all'
+    params: "{{ validated_vlans }}"
+  when:
+    - validated_vlans is defined

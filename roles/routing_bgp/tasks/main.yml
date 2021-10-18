@@ -1,0 +1,31 @@
+---
+- name: Validate Data - Routing BGP
+  set_fact: 
+    validated_bgp: "{{ validated_bgp }}"
+  vars:
+    model_name: 'RoutingBgpProcess'
+    validated_bgp: "{{ routing.bgp | mihudec.net_filters.to_model(model=model_name, many=false) }}"
+  when:
+    - routing.bgp is defined
+
+- name: Template - Routing BGP
+  ansible.builtin.template:
+    src: "{{ ansible_network_os }}/{{ ansible_network_os }}_{{ template_name }}.j2"
+    dest: "{{ TEMPLATE_OUTPUT_DIR }}/{{ inventory_hostname }}_{{ ansible_network_os }}_{{ template_name }}.txt"
+  vars:
+    template_name: 'routing_bgp'
+    bgp_params: "{{ validated_bgp }}"
+    inventory: "{{ hostvars }}"
+  when:
+    - validated_bgp is defined
+
+- name: Deploy - Routing BGP
+  cisco.ios.ios_config:
+    src: "{{ ansible_network_os }}/{{ ansible_network_os }}_{{ template_name }}.j2"
+  vars:
+    template_name: 'routing_bgp'
+    bgp_params: "{{ validated_bgp }}"
+    inventory: "{{ hostvars }}"
+  when:
+    - validated_bgp is defined
+    - TEMPLATE_ONLY | default(false) is sameas false

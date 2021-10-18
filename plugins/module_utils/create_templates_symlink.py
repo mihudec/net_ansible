@@ -16,6 +16,9 @@ def create_templates_symlink():
     
     for device_type_dir in [x for x in TEMPLATES_DIR.iterdir() if x.is_dir()]:
         print(device_type_dir)
+        if COLLECTION_TEMPLATES_DIR.joinpath(device_type_dir.name).exists():
+            print(f"Unlinking {device_type_dir.name}...")
+            COLLECTION_TEMPLATES_DIR.joinpath(device_type_dir.name).unlink()
         print(f"Linking {device_type_dir.name}...")
         os.symlink(src=device_type_dir, dst=COLLECTION_TEMPLATES_DIR.joinpath(device_type_dir.name), target_is_directory=True)
 

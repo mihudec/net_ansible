@@ -5,9 +5,10 @@ galaxy_info:
 
   license: License_TBD
 
-  min_ansible_version: 2.10
+  min_ansible_version: 2.1
 
   galaxy_tags: []
 
 dependencies:
   - role: mihudec.net_ansible.run_preparation
+

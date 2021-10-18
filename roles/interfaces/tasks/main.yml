@@ -1,41 +1,47 @@
 ---
 - name: Validate Data - Interfaces
-  ansible.builtin.assert:
-    that:
-      - params | mihudec.net_ansible.validate_data(model=model_name, many=false)
-    fail_msg: "Data Validation Failed"
-    success_msg: "Given data is valid accoring to '{{ model_name }}' model."
-    quiet: true
+  set_fact: 
+    validated_interfaces: "{{ validated_interfaces.interfaces }}"
   vars:
-    model_name: 'InterfaceContainerModel'
-    params: "{{ {'interfaces': interfaces} }}"
-  when:
-    - interfaces is defined
+    interfaces_dict_params: "{{ INTERFACES_DICT_PARAMS | default({'exclude_none': true}) }}"
+    validated_interfaces_list: "{{ interfaces.values() | list | mihudec.net_filters.to_model(model='InterfaceModel', dict_params=interfaces_dict_params, many=True) }}"
+    validated_interfaces: "{{ {'interfaces': validated_interfaces_list} | mihudec.net_filters.to_model(model='InterfaceContainerModel', dict_params={'exclude_none': true}, many=False) }}"
 
-- name: Validate Data - Interfaces (Individual)
-  ansible.builtin.assert:
-    that:
-      - params | mihudec.net_ansible.validate_data(model=model_name, many=false)
-      - item.key == item.value.name
-    fail_msg: "Data Validation Failed"
-    success_msg: "Given data is valid accoring to '{{ model_name }}' model."
-    quiet: true
-  loop: "{{ interfaces | dict2items }}"
-  loop_control:
-    label: "{{ item.key }}"
-  vars:
-    model_name: 'InterfaceModel'
-    params: "{{ item.value }}"
-  when:
-    - interfaces is defined
+- name: DEBUG Validated Data - Interfaces
+  debug: 
+    msg: "{{ validated_interfaces }}"
 
 - name: Template - Interfaces
   ansible.builtin.template:
     src: "{{ ansible_network_os }}/{{ ansible_network_os }}_{{ template_name }}.j2"
     dest: "{{ TEMPLATE_OUTPUT_DIR }}/{{ inventory_hostname }}_{{ ansible_network_os }}_{{ template_name }}.txt"
   vars:
-    model_name: 'InterfaceContainerModel'
     template_name: 'interfaces'
-    params: "{{ {'interfaces': interfaces} | mihudec.net_ansible.to_model(model=model_name) }}"
+    params: "{{ validated_interfaces }}"
   when:
-    - interfaces is defined
+    - validated_interfaces is defined
+
+- name: Deploy - Interfaces
+  cisco.ios.ios_config:
+    src: "{{ ansible_network_os }}/{{ ansible_network_os }}_{{ template_name }}.j2"
+  vars:
+    template_name: 'interfaces'
+    params: "{{ validated_interfaces }}"
+  when:
+    - validated_interfaces is defined
+    - TEMPLATE_ONLY | default(false) is sameas false
+    - INDIVIDUAL | default(false) is sameas false
+
+- name: Deploy - Interfaces (Individual)
+  cisco.ios.ios_config:
+    src: "{{ ansible_network_os }}/{{ ansible_network_os }}_{{ template_name }}.j2"
+  loop: "{{ validated_interfaces.values() }}"
+  loop_control:
+    label: "{{ item.name }}"
+  vars:
+    template_name: 'interface_base'
+    interface: "{{ item }}"
+  when:
+    - validated_interfaces is defined
+    - TEMPLATE_ONLY | default(false) is sameas false
+    - INDIVIDUAL | default(false) is sameas true

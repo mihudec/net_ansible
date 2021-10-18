@@ -1,0 +1,31 @@
+---
+# TODO: Unfinished 
+- name: DEBUG
+  debug:
+    msg: "{{ access_lists }}"
+  when:
+    - access_lists is defined
+
+- name: Validate Data - Access Lists
+  set_fact: 
+    validated_access_lists: "{{ validated_access_lists }}"
+  vars:
+    validated_access_lists: "{{ access_lists | list | mihudec.net_filters.to_model(model='AclStandardIPv4', many=True) }}"
+  when: 
+    - access_lists is defined
+
+- name: DEBUG
+  debug:
+    msg: "{{ validated_access_lists }}"
+  when:
+    - validated_access_lists is defined
+
+- name: Template - Access Lists
+  ansible.builtin.template:
+    src: "{{ ansible_network_os }}/{{ ansible_network_os }}_{{ template_name }}.j2"
+    dest: "{{ TEMPLATE_OUTPUT_DIR }}/{{ inventory_hostname }}_{{ ansible_network_os }}_{{ template_name }}.txt"
+  vars:
+    template_name: 'acl_all'
+    params: "{{ validated_access_lists }}"
+  when:
+    - validated_access_lists is defined
